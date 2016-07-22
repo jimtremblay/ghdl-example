@@ -7,8 +7,7 @@ TESTBENCHPATH = testbench/${TESTBENCHFILE}$(VHDLEX)
 TESTBENCHFILE = ${TESTBENCH}_tb
 
 #GHDL CONFIG
-#GHDL_CMD = ghdl
-GHDL_CMD = docker run --rm -v $(PWD):/work -w /work jimtremblay/ghdl-ubuntu ghdl
+GHDL_CMD = ghdl
 GHDL_FLAGS  = --ieee=synopsys --warn-no-vital-generic
 
 SIMDIR = simulation
@@ -21,17 +20,20 @@ WAVEFORM_VIEWER = gtkwave
 
 .PHONY: clean
 
-all: clean compile run view
+all: clean make run view
 
 compile:
+	@$(GHDL_CMD) -i $(GHDL_FLAGS) --workdir=simulation --work=work $(TESTBENCHPATH) $(FILES)
+	@$(GHDL_CMD) -m  $(GHDL_FLAGS) --workdir=simulation --work=work $(TESTBENCHFILE)
+
+make:
 ifeq ($(strip $(TESTBENCH)),)
 	@echo "TESTBENCH not set. Use TESTBENCH=<value> to set it."
 	@exit 1
 endif
 
 	@mkdir -p simulation
-	@$(GHDL_CMD) -i $(GHDL_FLAGS) --workdir=simulation --work=work $(TESTBENCHPATH) $(FILES)
-	@$(GHDL_CMD) -m  $(GHDL_FLAGS) --workdir=simulation --work=work $(TESTBENCHFILE)
+	docker run --rm -v $(PWD):/work -w /work jimtremblay/ghdl-ubuntu make compile TESTBENCH=${TESTBENCH}
 	@mv $(TESTBENCHFILE) simulation/$(TESTBENCHFILE)
 
 run:
